@@ -1,3 +1,4 @@
+## Udacity Project 1
 # SQL Analysis Project: Exploring the Sakila DVD Rental Database
 
 This project involves exploring the **Sakila DVD Rental** database using SQL to gain insights into the customer base, movie rental patterns, payment details, and store performances. The project includes writing SQL queries to answer specific questions, generating visualizations based on the query results, and presenting the findings.

@@ -1,0 +1,68 @@
+/* Query 1 - query used for first insight - Q1 in set 1*/
+SELECT DISTINCT film_title, category_name, rental_count
+from (
+	SELECT f.title as film_title, c.name as category_name, COUNT(rental_id) OVER (PARTITION by f.title order by f.title) as rental_count
+	FROM film f
+	join film_category fc on f.film_id = fc.film_id
+	join category c on c.category_id = fc.category_id
+	join inventory i on i.film_id = f.film_id
+	join rental r on r.inventory_id = i.inventory_id
+	WHERE c.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')
+)
+order by category_name
+;
+
+
+/* Query 2 - query used for second insight - Q1 in set 2*/
+SELECT DATE_PART('month', r.rental_date) as rental_month, DATE_PART('year', r.rental_date) as rental_year, s.store_id, COUNT(r.rental_id) as count_rentals
+FROM rental r
+JOIN staff st on st.staff_id = r.staff_id
+JOIN store s on s.store_id = st.store_id
+GROUP BY rental_month, s.store_id, rental_year
+ORDER BY count_rentals desc
+;
+        
+
+/* Query 3 - query used for third insight - Q2 in set 2*/
+SELECT payment_mon, fullname, pay_countpermonth, pay_amount
+FROM (
+  SELECT DATE_TRUNC('month', p.payment_date) as payment_mon, SUM(p.amount) as 	pay_amount, COUNT(p.payment_id) as pay_countpermonth, tc.fullname
+  from 
+  (
+ 	SELECT  c.customer_id, CONCAT(c.first_name, ' ', c.last_name) as fullname, 	SUM(p.amount) AS total_amount
+  	FROM  customer c
+  	JOIN  payment p ON p.customer_id = c.customer_id
+  	WHERE  DATE_PART('year', p.payment_date) = 2007
+  	GROUP BY  c.customer_id, fullname
+  	ORDER BY total_amount DESC
+  	LIMIT 10
+  ) tc
+  join payment p on p.customer_id = tc.customer_id
+  group by payment_mon, tc.fullname
+ ) 
+group by payment_mon, fullname, pay_amount, pay_countpermonth
+order by fullname, payment_mon
+;
+
+
+/* Query 4 - query used for forth insight - Q3 in set 2*/
+SELECT payment_mon, fullname, pay_countpermonth, pay_amount, pay_amount - LAG(pay_amount) OVER (PARTITION BY fullname ORDER BY payment_mon) AS payment_diff
+
+FROM (
+  SELECT DATE_TRUNC('month', p.payment_date) as payment_mon, SUM(p.amount) as 	pay_amount, COUNT(p.payment_id) as pay_countpermonth, tc.fullname
+  from 
+  (
+ 	SELECT  c.customer_id, CONCAT(c.first_name, ' ', c.last_name) as fullname, 	SUM(p.amount) AS total_amount
+  	FROM  customer c
+  	JOIN  payment p ON p.customer_id = c.customer_id
+  	WHERE  DATE_PART('year', p.payment_date) = 2007
+  	GROUP BY  c.customer_id, fullname
+  	ORDER BY total_amount DESC
+  	LIMIT 10
+  ) tc
+  join payment p on p.customer_id = tc.customer_id
+  group by payment_mon, tc.fullname
+ ) 
+group by payment_mon, fullname, pay_amount, pay_countpermonth
+order by fullname, payment_mon
+;
